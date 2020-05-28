@@ -81,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     //然后通过一个函数来申请
+    // 网址https://blog.csdn.net/qq_29124379/article/details/103491545?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-3.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-3.nonecase
     public static void verifyStoragePermissions(Activity activity) {
         try {
             //检测是否有写的权限
