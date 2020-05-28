@@ -1,13 +1,20 @@
 package com.teddy.bitmapproject;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Html;
 import android.util.Log;
 import android.view.View;
@@ -21,16 +28,21 @@ import com.hjq.toast.style.ToastWhiteStyle;
 
 import java.util.List;
 
+import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String imageUrl = "https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2534506313,1688529724&fm=26&gp=0.jpg";
 
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static final int NOT_NOTICE = 2;
 
     private static String[] PERMISSIONS_STORAGE = {
             "android.permission.READ_EXTERNAL_STORAGE",
             "android.permission.WRITE_EXTERNAL_STORAGE"};
+
+     private  AlertDialog alertDialog = null;
 
 
     @Override
@@ -42,10 +54,14 @@ public class MainActivity extends AppCompatActivity {
         ToastUtils.init(getApplication(), new ToastWhiteStyle(getApplicationContext()));
 
 
+
+
         requestPermission();
 
         ToastUtils.show("获取权限成功");
 
+
+         //这个方法里面有很多的弹框，也很好用的，
 //        verifyStoragePermissions(this);
 //        checkPermission();
 
@@ -79,7 +95,54 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //动态权限，也不知道对不对，网上巴拉
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_EXTERNAL_STORAGE){
+            for (int i =0;i<permissions.length;i++){
+                if (grantResults[i] == PERMISSION_GRANTED){ //选择了“始终允许”
+                    Toast.makeText(this, "" + "权限" + permissions[i] + "申请成功", Toast.LENGTH_SHORT).show();
+                }else {
+                    if (!ActivityCompat.shouldShowRequestPermissionRationale(this,permissions[i])){//用户选择了禁止不再询问
+                        AlertDialog.Builder builder   = new AlertDialog.Builder(this);
+                        builder.setTitle("permission")
+                                .setMessage("点击允许可以使用我们的APP哦")
+                                .setPositiveButton("去允许", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        if (alertDialog != null && alertDialog.isShowing()){
+                                            alertDialog.dismiss();
+                                        }
+                                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                        Uri uri = Uri.fromParts("package",getPackageName(),null);//注意就是"package",不用改成自己的包名
+                                       intent.setData(uri);
+                                       startActivityForResult(intent,NOT_NOTICE);
+
+
+                                    }
+                                });
+                        alertDialog = builder.create();
+                        alertDialog.setCanceledOnTouchOutside(false);
+                        alertDialog.show();
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == NOT_NOTICE){
+            verifyStoragePermissions(this);
+        }
+    }
+
+    //动态权限，
+    // 网址https://blog.csdn.net/hqyhqyhq/article/details/77163607?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase
     private void checkPermission() {
         //检查权限（NEED_PERMISSION）是否被授权 PackageManager.PERMISSION_GRANTED表示同意授权
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
